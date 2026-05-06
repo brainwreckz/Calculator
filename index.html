@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Calculator Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.18);
+    --text: #f0ece4;
+    --muted: #666;
+    --muted2: #444;
+    --accent: #ff5c00;
+    --accent2: #00d4ff;
+    --green: #00e676;
+    --red: #ff4444;
+    --yellow: #ffcc00;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* GLOW ORB */
+  .glow-orb {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,92,0,0.06) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    animation: slideDown 0.6s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-mark {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 500;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .logo h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .logo h1 span {
+    color: var(--accent);
+  }
+
+  .logo p {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    letter-spacing: 0.06em;
+    line-height: 1.8;
+  }
+
+  /* TABS */
+  .tabs-wrapper {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tab-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 100px;
+  }
+
+  .tab-btn span { position: relative; z-index: 1; }
+
+  .tab-btn:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+
+  .tab-btn.active {
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .tab-btn.active::before { opacity: 1; }
+
+  /* PANEL */
+  .panel { display: none; }
+  .panel.active {
+    display: block;
+    animation: panelIn 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .panel-icon {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .panel-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+
+  .panel-desc {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+    letter-spacing: 0.06em;
+  }
+
+  /* FIELDS */
+  .fields-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  @media (max-width: 600px) {
+    .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 420px) {
+    .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  .field label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-wrap .sym {
+    position: absolute;
+    left: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .input-wrap .sym-right {
+    position: absolute;
+    right: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    height: 46px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 400;
+    padding: 0 14px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  input.sym-input { padding-left: 26px; }
+  input.sym-right-input { padding-right: 28px; }
+
+  input:focus, select:focus {
+    border-color: var(--accent2);
+    background: var(--surface2);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+  }
+
+  input:hover:not(:focus), select:hover:not(:focus) {
+    border-color: var(--border-hover);
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  select option { background: #1e1e1e; }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .divider-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .divider-label span {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .divider-label::before, .divider-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* RESULTS */
+  .results {
+    margin-top: 8px;
+    display: none;
+  }
+
+  .results.show {
+    display: block;
+    animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .metric-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+  }
+
+  .metric-card.hero {
+    background: var(--accent);
+    border-color: var(--accent);
+    grid-column: span 2;
+  }
+
+  .metric-card.success {
+    border-color: rgba(0,230,118,0.3);
+    background: rgba(0,230,118,0.05);
+  }
+
+  .metric-card.danger {
+    border-color: rgba(255,68,68,0.3);
+    background: rgba(255,68,68,0.05);
+  }
+
+  .metric-card.info {
+    border-color: rgba(0,212,255,0.3);
+    background: rgba(0,212,255,0.05);
+  }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .metric-card.hero .metric-label { color: rgba(255,255,255,0.6); }
+
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+    transition: all 0.3s;
+  }
+
+  .metric-card.hero .metric-value { color: #fff; font-size: 32px; font-weight: 300; }
+  .metric-card.success .metric-value { color: var(--green); }
+  .metric-card.danger .metric-value { color: var(--red); }
+  .metric-card.info .metric-value { color: var(--accent2); }
+
+  .metric-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .metric-card.hero .metric-sub { color: rgba(255,255,255,0.5); }
+
+  /* BAR CHART */
+  .bar-chart { margin-top: 4px; }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .bar-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    width: 100px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    width: 0;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .bar-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    width: 80px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* INSIGHT */
+  .insight {
+    background: var(--surface);
+    border: 1px solid rgba(255,204,0,0.2);
+    border-left: 3px solid var(--yellow);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: #b8a870;
+    display: none;
+  }
+
+  .insight.show { display: block; animation: fadeUp 0.3s ease; }
+
+  /* PROGRESS RING */
+  .progress-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 14px;
+  }
+
+  .ring-wrap { flex-shrink: 0; }
+
+  svg.ring { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--surface2); }
+  .ring-progress { fill: none; stroke-linecap: round; transition: stroke-dashoffset 0.9s cubic-bezier(0.16,1,0.3,1); }
+
+  .ring-label {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .ring-label strong { font-size: 20px; font-weight: 500; color: var(--accent2); }
+  .ring-label p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* AMORTIZATION TABLE */
+  .table-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  thead { background: var(--surface2); }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 14px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr:hover td { background: var(--surface2); }
+
+  td.positive { color: var(--green); }
+  td.negative { color: var(--red); }
+  td.highlight { color: var(--accent2); font-weight: 500; }
+
+  /* CALC BUTTON */
+  .calc-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 28px;
+    height: 48px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  }
+
+  .calc-btn:hover {
+    background: #e04a00;
+    box-shadow: 0 4px 20px rgba(255,92,0,0.3);
+  }
+
+  .calc-btn:active { transform: scale(0.97); }
+
+  .calc-btn svg { flex-shrink: 0; }
+
+  .reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 18px;
+    height: 48px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:hover { border-color: var(--border-hover); color: var(--text); }
+
+  .btn-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  /* FOOTER */
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted2);
+    letter-spacing: 0.06em;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* TOOLTIP */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2a2a;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+    border: 1px solid var(--border);
+  }
+  [data-tip]:hover::after { opacity: 1; }
+
+  /* RANGE SLIDER */
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    outline: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .range-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .range-row input[type="range"] { flex: 1; }
+  .range-val {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent2);
+    width: 50px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* ANIMATIONS */
+  @keyframes popIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    60% { transform: scale(1.03); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .pop { animation: popIn 0.35s cubic-bezier(0.16,1,0.3,1); }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.10s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.20s; }
+
+</style>
+</head>
+<body>
+<div class="glow-orb"></div>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">₿</div>
+      <div>
+        <h1>Business<span>Calc</span></h1>
+        <p>Professional Financial Suite</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div>7 Calculators</div>
+      <div>Zero Dependencies</div>
+      <div>Open Source</div>
+    </div>
+  </header>
+
+  <div class="tabs-wrapper">
+    <button class="tab-btn active" onclick="switchTab('pl')"><span>P&amp;L</span></button>
+    <button class="tab-btn" onclick="switchTab('margins')"><span>Margins</span></button>
+    <button class="tab-btn" onclick="switchTab('breakeven')"><span>Break-even</span></button>
+    <button class="tab-btn" onclick="switchTab('roi')"><span>ROI</span></button>
+    <button class="tab-btn" onclick="switchTab('cac')"><span>CAC / LTV</span></button>
+    <button class="tab-btn" onclick="switchTab('runway')"><span>Runway</span></button>
+    <button class="tab-btn" onclick="switchTab('loan')"><span>Loan</span></button>
+  </div>
+
+  <!-- ======================== P&L ======================== -->
+  <div id="panel-pl" class="panel active">
+    <div class="panel-header">
+      <div class="panel-icon">📊</div>
+      <div class="panel-title">Profit & Loss</div>
+      <div class="panel-desc">Monthly / Annual</div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label>Total Revenue</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-revenue" class="sym-input" placeholder="250000" oninput="calcPL()"></div>
+      </div>
+      <div class="field">
+        <label>Cost of Goods Sold (COGS)</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-cogs" class="sym-input" placeholder="80000" oninput="calcPL()"></div>
+      </div>
+    </div>
+    <div class="divider-label"><span>Operating Expenses</span></div>
+    <div class="fields-grid cols-4">
+      <div class="field">
+        <label>Salaries</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-sal" class="sym-input" placeholder="60000" oninput="calcPL()"></div>
+      </div>
+      <div class="field">
+        <label>Marketing</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-mkt" class="sym-input" placeholder="20000" oninput="calcPL()"></div>
+      </div>
+      <div class="field">
+        <label>Rent / Facilities</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-rent" class="sym-input" placeholder="8000" oninput="calcPL()"></div>
+      </div>
+      <div class="field">
+        <label>Other Expenses</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-other" class="sym-input" placeholder="5000" oninput="calcPL()"></div>
+      </div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label data-tip="Depreciation & Amortization">D&A (optional)</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="pl-da" class="sym-input" placeholder="0" oninput="calcPL()"></div>
+      </div>
+      <div class="field">
+        <label>Corporate Tax Rate</label>
+        <div class="input-wrap"><input type="number" id="pl-tax" class="sym-right-input" placeholder="21" oninput="calcPL()"><span class="sym-right">%</span></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcPL()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7h6m0 10v-3m-3 3V7m-7 7a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
+        Calculate
+      </button>
+      <button class="reset-btn" onclick="resetPanel('pl')">Reset</button>
+    </div>
+    <div class="results" id="res-pl">
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-label">Revenue</div><div class="metric-value" id="pl-r-rev">—</div></div>
+        <div class="metric-card"><div class="metric-label">Gross Profit</div><div class="metric-value" id="pl-r-gross">—</div></div>
+        <div class="metric-card hero"><div class="metric-label">Net Profit (After Tax)</div><div class="metric-value" id="pl-r-net">—</div><div class="metric-sub" id="pl-r-nm">Net margin —</div></div>
+        <div class="metric-card"><div class="metric-label">EBITDA</div><div class="metric-value" id="pl-r-ebitda">—</div></div>
+        <div class="metric-card"><div class="metric-label">Total OpEx</div><div class="metric-value" id="pl-r-opex">—</div></div>
+        <div class="metric-card"><div class="metric-label">Tax Paid</div><div class="metric-value" id="pl-r-tax">—</div></div>
+      </div>
+      <div class="divider-label"><span>Cost Breakdown</span></div>
+      <div class="bar-chart" id="pl-bars"></div>
+      <div class="insight" id="pl-insight"></div>
+    </div>
+  </div>
+
+  <!-- ======================== MARGINS ======================== -->
+  <div id="panel-margins" class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">📈</div>
+      <div class="panel-title">Margin Analysis</div>
+      <div class="panel-desc">Gross / Operating / Net</div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label>Revenue</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="mg-rev" class="sym-input" placeholder="500000" oninput="calcMargins()"></div>
+      </div>
+      <div class="field">
+        <label>COGS</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="mg-cogs" class="sym-input" placeholder="200000" oninput="calcMargins()"></div>
+      </div>
+      <div class="field">
+        <label>Operating Expenses</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="mg-opex" class="sym-input" placeholder="100000" oninput="calcMargins()"></div>
+      </div>
+      <div class="field">
+        <label>Interest + Tax</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="mg-it" class="sym-input" placeholder="30000" oninput="calcMargins()"></div>
+      </div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label>Industry (for benchmarking)</label>
+        <select id="mg-industry" onchange="calcMargins()">
+          <option value="saas">SaaS / Software</option>
+          <option value="retail">Retail / E-commerce</option>
+          <option value="manufacturing">Manufacturing</option>
+          <option value="services">Professional Services</option>
+          <option value="restaurant">Restaurant / Food</option>
+          <option value="construction">Construction</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>D&A (for EBITDA)</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="mg-da" class="sym-input" placeholder="0" oninput="calcMargins()"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcMargins()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Analyze
+      </button>
+      <button class="reset-btn" onclick="resetPanel('margins')">Reset</button>
+    </div>
+    <div class="results" id="res-margins">
+      <div class="metrics-grid">
+        <div class="metric-card info"><div class="metric-label">Gross Margin</div><div class="metric-value" id="mg-r-gross">—</div><div class="metric-sub" id="mg-bm-gross"></div></div>
+        <div class="metric-card info"><div class="metric-label">Operating Margin</div><div class="metric-value" id="mg-r-oper">—</div><div class="metric-sub" id="mg-bm-oper"></div></div>
+        <div class="metric-card hero"><div class="metric-label">Net Margin</div><div class="metric-value" id="mg-r-net">—</div><div class="metric-sub" id="mg-bm-net"></div></div>
+        <div class="metric-card"><div class="metric-label">EBITDA Margin</div><div class="metric-value" id="mg-r-ebitda">—</div></div>
+      </div>
+      <div class="divider-label"><span>Margin Waterfall</span></div>
+      <div class="bar-chart" id="mg-bars"></div>
+      <div class="insight" id="mg-insight"></div>
+    </div>
+  </div>
+
+  <!-- ======================== BREAK-EVEN ======================== -->
+  <div id="panel-breakeven" class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">⚖️</div>
+      <div class="panel-title">Break-even Analysis</div>
+      <div class="panel-desc">Units / Revenue</div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label>Monthly Fixed Costs</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="be-fixed" class="sym-input" placeholder="50000" oninput="calcBreakeven()"></div>
+      </div>
+      <div class="field">
+        <label>Selling Price per Unit</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="be-price" class="sym-input" placeholder="199" oninput="calcBreakeven()"></div>
+      </div>
+      <div class="field">
+        <label>Variable Cost per Unit</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="be-var" class="sym-input" placeholder="79" oninput="calcBreakeven()"></div>
+      </div>
+      <div class="field">
+        <label>Current Units Sold / Mo</label>
+        <input type="number" id="be-current" placeholder="350" oninput="calcBreakeven()">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcBreakeven()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Calculate
+      </button>
+      <button class="reset-btn" onclick="resetPanel('breakeven')">Reset</button>
+    </div>
+    <div class="results" id="res-breakeven">
+      <div class="metrics-grid">
+        <div class="metric-card hero"><div class="metric-label">Break-even Units</div><div class="metric-value" id="be-r-units">—</div><div class="metric-sub" id="be-r-rev-sub"></div></div>
+        <div class="metric-card"><div class="metric-label">Break-even Revenue</div><div class="metric-value" id="be-r-rev">—</div></div>
+        <div class="metric-card"><div class="metric-label">Contribution Margin</div><div class="metric-value" id="be-r-cm">—</div><div class="metric-sub" id="be-r-cm-ratio"></div></div>
+        <div class="metric-card" id="be-safety-card"><div class="metric-label">Safety Margin</div><div class="metric-value" id="be-r-safety">—</div><div class="metric-sub" id="be-r-safety-sub"></div></div>
+      </div>
+      <div id="be-progress-wrap" class="progress-section">
+        <div class="ring-wrap">
+          <svg class="ring" width="80" height="80" viewBox="0 0 80 80">
+            <circle class="ring-bg" cx="40" cy="40" r="33" stroke-width="7"/>
+            <circle id="be-ring" class="ring-progress" cx="40" cy="40" r="33" stroke-width="7" stroke="#00d4ff" stroke-dasharray="207.3" stroke-dashoffset="207.3"/>
+          </svg>
+        </div>
+        <div class="ring-label">
+          <strong id="be-pct">0%</strong>
+          <p id="be-ring-label">of break-even reached</p>
+          <p id="be-ring-sub" style="margin-top:6px; font-size:12px; color: var(--text);"></p>
+        </div>
+      </div>
+      <div class="insight" id="be-insight"></div>
+    </div>
+  </div>
+
+  <!-- ======================== ROI ======================== -->
+  <div id="panel-roi" class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">💰</div>
+      <div class="panel-title">Return on Investment</div>
+      <div class="panel-desc">Simple & Annualized</div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label>Initial Investment</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="roi-inv" class="sym-input" placeholder="100000" oninput="calcROI()"></div>
+      </div>
+      <div class="field">
+        <label>Final / Current Value</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="roi-val" class="sym-input" placeholder="145000" oninput="calcROI()"></div>
+      </div>
+      <div class="field">
+        <label>Duration (months)</label>
+        <div class="range-row">
+          <input type="range" id="roi-months-r" min="1" max="120" value="18" step="1" oninput="document.getElementById('roi-months').value=this.value; calcROI()">
+          <span class="range-val" id="roi-months-disp">18</span>
+        </div>
+        <input type="number" id="roi-months" placeholder="18" value="18" oninput="document.getElementById('roi-months-r').value=this.value||18; document.getElementById('roi-months-disp').textContent=this.value||18; calcROI()" style="margin-top:8px; height:36px; font-size:13px;">
+      </div>
+      <div class="field">
+        <label>Additional Cash Flows</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="roi-cf" class="sym-input" placeholder="0" oninput="calcROI()"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcROI()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Calculate ROI
+      </button>
+      <button class="reset-btn" onclick="resetPanel('roi')">Reset</button>
+    </div>
+    <div class="results" id="res-roi">
+      <div class="metrics-grid">
+        <div class="metric-card hero"><div class="metric-label">Total ROI</div><div class="metric-value" id="roi-r-total">—</div><div class="metric-sub" id="roi-r-gain"></div></div>
+        <div class="metric-card"><div class="metric-label">Annualized ROI</div><div class="metric-value" id="roi-r-annual">—</div></div>
+        <div class="metric-card"><div class="metric-label">Net Gain / Loss</div><div class="metric-value" id="roi-r-net">—</div></div>
+        <div class="metric-card"><div class="metric-label">Payback Period</div><div class="metric-value" id="roi-r-payback">—</div></div>
+      </div>
+      <div class="insight" id="roi-insight"></div>
+    </div>
+  </div>
+
+  <!-- ======================== CAC / LTV ======================== -->
+  <div id="panel-cac" class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">🎯</div>
+      <div class="panel-title">CAC / LTV Analysis</div>
+      <div class="panel-desc">Customer Economics</div>
+    </div>
+    <div class="divider-label"><span>Customer Acquisition</span></div>
+    <div class="fields-grid cols-3">
+      <div class="field">
+        <label>Total Sales & Marketing Spend</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="cac-spend" class="sym-input" placeholder="50000" oninput="calcCAC()"></div>
+      </div>
+      <div class="field">
+        <label>New Customers Acquired</label>
+        <input type="number" id="cac-customers" placeholder="200" oninput="calcCAC()">
+      </div>
+      <div class="field">
+        <label>Period (months)</label>
+        <input type="number" id="cac-period" placeholder="3" oninput="calcCAC()">
+      </div>
+    </div>
+    <div class="divider-label"><span>Customer Lifetime Value</span></div>
+    <div class="fields-grid cols-3">
+      <div class="field">
+        <label>Avg Revenue per Customer / Mo</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="ltv-arpu" class="sym-input" placeholder="99" oninput="calcCAC()"></div>
+      </div>
+      <div class="field">
+        <label>Gross Margin %</label>
+        <div class="input-wrap"><input type="number" id="ltv-margin" class="sym-right-input" placeholder="75" oninput="calcCAC()"><span class="sym-right">%</span></div>
+      </div>
+      <div class="field">
+        <label>Monthly Churn Rate</label>
+        <div class="input-wrap"><input type="number" id="ltv-churn" class="sym-right-input" placeholder="3" oninput="calcCAC()"><span class="sym-right">%</span></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcCAC()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Analyze
+      </button>
+      <button class="reset-btn" onclick="resetPanel('cac')">Reset</button>
+    </div>
+    <div class="results" id="res-cac">
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-label">CAC</div><div class="metric-value" id="cac-r-cac">—</div><div class="metric-sub">Per acquired customer</div></div>
+        <div class="metric-card"><div class="metric-label">LTV</div><div class="metric-value" id="cac-r-ltv">—</div><div class="metric-sub" id="cac-r-life"></div></div>
+        <div class="metric-card hero"><div class="metric-label">LTV : CAC Ratio</div><div class="metric-value" id="cac-r-ratio">—</div><div class="metric-sub" id="cac-r-ratio-label"></div></div>
+        <div class="metric-card"><div class="metric-label">CAC Payback Period</div><div class="metric-value" id="cac-r-payback">—</div></div>
+        <div class="metric-card"><div class="metric-label">Avg Customer Lifetime</div><div class="metric-value" id="cac-r-lifetime">—</div></div>
+        <div class="metric-card"><div class="metric-label">Monthly Recurring Rev / Customer</div><div class="metric-value" id="cac-r-mrr">—</div></div>
+      </div>
+      <div class="insight" id="cac-insight"></div>
+    </div>
+  </div>
+
+  <!-- ======================== RUNWAY ======================== -->
+  <div id="panel-runway" class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">🚀</div>
+      <div class="panel-title">Cash Runway</div>
+      <div class="panel-desc">Burn Rate & Survival</div>
+    </div>
+    <div class="fields-grid cols-2">
+      <div class="field">
+        <label>Current Cash Balance</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="rw-cash" class="sym-input" placeholder="1200000" oninput="calcRunway()"></div>
+      </div>
+      <div class="field">
+        <label>Monthly Revenue</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="rw-rev" class="sym-input" placeholder="80000" oninput="calcRunway()"></div>
+      </div>
+      <div class="field">
+        <label>Monthly Expenses</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="rw-exp" class="sym-input" placeholder="150000" oninput="calcRunway()"></div>
+      </div>
+      <div class="field">
+        <label>Monthly Revenue Growth Rate</label>
+        <div class="input-wrap"><input type="number" id="rw-growth" class="sym-right-input" placeholder="8" oninput="calcRunway()"><span class="sym-right">%</span></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcRunway()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3m1 13a2 2 0 01-2-2V9a2 2 0 012-2h5a2 2 0 012 2v10a2 2 0 01-2 2h-5z"/></svg>
+        Calculate
+      </button>
+      <button class="reset-btn" onclick="resetPanel('runway')">Reset</button>
+    </div>
+    <div class="results" id="res-runway">
+      <div class="metrics-grid">
+        <div class="metric-card hero"><div class="metric-label">Cash Runway</div><div class="metric-value" id="rw-r-runway">—</div><div class="metric-sub" id="rw-r-date"></div></div>
+        <div class="metric-card"><div class="metric-label">Monthly Burn Rate</div><div class="metric-value" id="rw-r-burn">—</div></div>
+        <div class="metric-card"><div class="metric-label">Default Alive Month</div><div class="metric-value" id="rw-r-alive">—</div></div>
+        <div class="metric-card"><div class="metric-label">Months to Profitability</div><div class="metric-value" id="rw-r-profit">—</div></div>
+      </div>
+      <div class="divider-label"><span>12-Month Cash Projection</span></div>
+      <div class="bar-chart" id="rw-bars"></div>
+      <div class="insight" id="rw-insight"></div>
+    </div>
+  </div>
+
+  <!-- ======================== LOAN ======================== -->
+  <div id="panel-loan" class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">🏦</div>
+      <div class="panel-title">Loan Amortization</div>
+      <div class="panel-desc">Business Financing</div>
+    </div>
+    <div class="fields-grid cols-3">
+      <div class="field">
+        <label>Loan Amount</label>
+        <div class="input-wrap"><span class="sym">$</span><input type="number" id="ln-amount" class="sym-input" placeholder="500000" oninput="calcLoan()"></div>
+      </div>
+      <div class="field">
+        <label>Annual Interest Rate</label>
+        <div class="input-wrap"><input type="number" id="ln-rate" class="sym-right-input" placeholder="7.5" step="0.1" oninput="calcLoan()"><span class="sym-right">%</span></div>
+      </div>
+      <div class="field">
+        <label>Loan Term (years)</label>
+        <input type="number" id="ln-years" placeholder="5" oninput="calcLoan()">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="calc-btn" onclick="calcLoan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Amortize
+      </button>
+      <button class="reset-btn" onclick="resetPanel('loan')">Reset</button>
+    </div>
+    <div class="results" id="res-loan">
+      <div class="metrics-grid">
+        <div class="metric-card hero"><div class="metric-label">Monthly Payment</div><div class="metric-value" id="ln-r-payment">—</div></div>
+        <div class="metric-card"><div class="metric-label">Total Interest Paid</div><div class="metric-value" id="ln-r-interest">—</div></div>
+        <div class="metric-card"><div class="metric-label">Total Cost of Loan</div><div class="metric-value" id="ln-r-total">—</div></div>
+        <div class="metric-card"><div class="metric-label">Interest Ratio</div><div class="metric-value" id="ln-r-ratio">—</div></div>
+      </div>
+      <div class="divider-label"><span>Amortization Schedule (first 24 months)</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>
+          </thead>
+          <tbody id="ln-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Business Calculator Pro — Open Source</span>
+    <span>No data stored · Works offline · Zero dependencies</span>
+  </footer>
+</div>
+
+<script>
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = (n, dec=0) => isFinite(n) ? '$' + Math.round(n).toLocaleString('en-US') : '—';
+const fmtD = (n, dec=1) => isFinite(n) ? '$' + n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '—';
+const pct = n => isFinite(n) ? (Math.round(n * 10) / 10) + '%' : '—';
+const val = id => parseFloat($(id).value) || 0;
+
+function showResults(id) {
+  const el = $(id);
+  el.classList.add('show');
+}
+
+function animateValue(id, newVal) {
+  const el = $(id);
+  if (!el) return;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.textContent = newVal;
+  el.classList.add('pop');
+}
+
+function setMetricClass(cardId, cls) {
+  const card = $(cardId);
+  if (!card) return;
+  card.classList.remove('success','danger','info');
+  if (cls) card.classList.add(cls);
+}
+
+function renderBars(containerId, items, colors) {
+  const max = Math.max(...items.map(i => i.value), 1);
+  const colorList = colors || ['#ff5c00','#00d4ff','#00e676','#ffcc00','#ff4444','#a78bfa'];
+  $(containerId).innerHTML = items.map((item, i) => `
+    <div class="bar-row">
+      <div class="bar-name">${item.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="background:${colorList[i % colorList.length]}" data-w="${(item.value / max * 100).toFixed(1)}"></div>
+      </div>
+      <div class="bar-val">${item.display}</div>
+    </div>
+  `).join('');
+  setTimeout(() => {
+    $(containerId).querySelectorAll('.bar-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 50);
+}
+
+function showInsight(id, text) {
+  const el = $(id);
+  el.textContent = text;
+  el.classList.add('show');
+}
+
+// ─── TAB SWITCHING ───────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function resetPanel(name) {
+  const panel = $('panel-' + name);
+  panel.querySelectorAll('input[type="number"]').forEach(i => i.value = '');
+  panel.querySelectorAll('.results').forEach(r => r.classList.remove('show'));
+}
+
+// ─── P&L ─────────────────────────────────────────────────────────────────────
+function calcPL() {
+  const rev = val('pl-revenue'), cogs = val('pl-cogs');
+  const sal = val('pl-sal'), mkt = val('pl-mkt'), rent = val('pl-rent'), other = val('pl-other');
+  const da = val('pl-da'), tax = val('pl-tax') || 21;
+  if (!rev) return;
+
+  const gross = rev - cogs;
+  const opex = sal + mkt + rent + other;
+  const ebit = gross - opex;
+  const ebitda = ebit + da;
+  const taxAmt = Math.max(0, ebit * (tax / 100));
+  const net = ebit - taxAmt;
+  const nm = rev > 0 ? (net / rev * 100) : 0;
+
+  animateValue('pl-r-rev', fmt(rev));
+  animateValue('pl-r-gross', fmt(gross));
+  animateValue('pl-r-net', fmt(net));
+  animateValue('pl-r-ebitda', fmt(ebitda));
+  animateValue('pl-r-opex', fmt(opex));
+  animateValue('pl-r-tax', fmt(taxAmt));
+  $('pl-r-nm').textContent = `Net margin ${pct(nm)}`;
+  setMetricClass('pl-r-net', net >= 0 ? null : 'danger');
+
+  const items = [
+    { label: 'COGS', value: cogs, display: fmt(cogs) },
+    { label: 'Salaries', value: sal, display: fmt(sal) },
+    { label: 'Marketing', value: mkt, display: fmt(mkt) },
+    { label: 'Rent', value: rent, display: fmt(rent) },
+    { label: 'Other', value: other, display: fmt(other) },
+  ].filter(i => i.value > 0);
+  renderBars('pl-bars', items);
+
+  let insight = '';
+  if (nm < 0) insight = `⚠️ You're operating at a loss. COGS + OpEx exceeds revenue by ${fmt(Math.abs(net))}. Consider reducing variable costs or increasing prices.`;
+  else if (nm < 5) insight = `📉 Thin margins at ${pct(nm)}. Most healthy businesses target 10%+. Review your largest expense categories.`;
+  else if (nm > 20) insight = `🏆 Strong net margin of ${pct(nm)}. You're performing above average for most industries.`;
+  else insight = `✅ Healthy net margin at ${pct(nm)}. EBITDA of ${fmt(ebitda)} indicates solid operating performance.`;
+  showInsight('pl-insight', insight);
+  showResults('res-pl');
+}
+
+// ─── MARGINS ─────────────────────────────────────────────────────────────────
+const benchmarks = {
+  saas: { gross: [60, 80], oper: [15, 30], net: [10, 25] },
+  retail: { gross: [25, 45], oper: [3, 8], net: [2, 6] },
+  manufacturing: { gross: [20, 40], oper: [5, 15], net: [3, 10] },
+  services: { gross: [50, 75], oper: [15, 25], net: [10, 20] },
+  restaurant: { gross: [60, 70], oper: [3, 9], net: [2, 6] },
+  construction: { gross: [15, 25], oper: [4, 10], net: [2, 8] },
+};
+
+function calcMargins() {
+  const rev = val('mg-rev'), cogs = val('mg-cogs');
+  const opex = val('mg-opex'), it = val('mg-it'), da = val('mg-da');
+  const ind = $('mg-industry').value;
+  if (!rev) return;
+
+  const gross = (rev - cogs) / rev * 100;
+  const oper = (rev - cogs - opex) / rev * 100;
+  const net = (rev - cogs - opex - it) / rev * 100;
+  const ebitda = ((rev - cogs - opex) + da) / rev * 100;
+
+  const bm = benchmarks[ind];
+  const bLabel = (val, range) => {
+    if (val < range[0]) return `Below avg (${range[0]}–${range[1]}%)`;
+    if (val > range[1]) return `Above avg (${range[0]}–${range[1]}%)`;
+    return `Within avg range (${range[0]}–${range[1]}%)`;
+  };
+
+  animateValue('mg-r-gross', pct(gross));
+  animateValue('mg-r-oper', pct(oper));
+  animateValue('mg-r-net', pct(net));
+  animateValue('mg-r-ebitda', pct(ebitda));
+  $('mg-bm-gross').textContent = bLabel(gross, bm.gross);
+  $('mg-bm-oper').textContent = bLabel(oper, bm.oper);
+  $('mg-bm-net').textContent = bLabel(net, bm.net);
+
+  renderBars('mg-bars', [
+    { label: 'Gross', value: Math.max(0, gross), display: pct(gross) },
+    { label: 'Operating', value: Math.max(0, oper), display: pct(oper) },
+    { label: 'Net', value: Math.max(0, net), display: pct(net) },
+    { label: 'EBITDA', value: Math.max(0, ebitda), display: pct(ebitda) },
+  ]);
+
+  const indNames = { saas: 'SaaS', retail: 'Retail', manufacturing: 'Manufacturing', services: 'Professional Services', restaurant: 'Restaurant', construction: 'Construction' };
+  let insight = `📊 ${indNames[ind]} benchmarks: Gross ${bm.gross[0]}–${bm.gross[1]}%, Operating ${bm.oper[0]}–${bm.oper[1]}%, Net ${bm.net[0]}–${bm.net[1]}%. `;
+  if (net < bm.net[0]) insight += `Your net margin is below industry average — focus on OpEx reduction or pricing strategy.`;
+  else if (net > bm.net[1]) insight += `Excellent performance above industry average!`;
+  else insight += `You're performing within normal range for your industry.`;
+  showInsight('mg-insight', insight);
+  showResults('res-margins');
+}
+
+// ─── BREAK-EVEN ──────────────────────────────────────────────────────────────
+function calcBreakeven() {
+  const fixed = val('be-fixed'), price = val('be-price'), varCost = val('be-var');
+  const current = val('be-current');
+  if (!fixed || !price || price <= varCost) return;
+
+  const cm = price - varCost;
+  const cmRatio = cm / price * 100;
+  const beUnits = Math.ceil(fixed / cm);
+  const beRev = beUnits * price;
+  const safety = current > 0 ? ((current - beUnits) / current * 100) : null;
+
+  animateValue('be-r-units', beUnits.toLocaleString());
+  animateValue('be-r-rev', fmt(beRev));
+  animateValue('be-r-cm', fmt(cm));
+  $('be-r-cm-ratio').textContent = `CM ratio: ${pct(cmRatio)}`;
+  $('be-r-rev-sub').textContent = `= ${fmt(beRev)} revenue`;
+
+  if (current > 0) {
+    animateValue('be-r-safety', pct(safety));
+    $('be-r-safety-sub').textContent = safety >= 0 ? `${(current - beUnits).toLocaleString()} units above break-even` : `${(beUnits - current).toLocaleString()} units below break-even`;
+    setMetricClass('be-safety-card', safety >= 20 ? 'success' : safety >= 0 ? null : 'danger');
+
+    const pctReached = Math.min(100, (current / beUnits * 100));
+    const circumference = 207.3;
+    const offset = circumference - (pctReached / 100 * circumference);
+    $('be-ring').style.strokeDashoffset = offset;
+    $('be-ring').style.stroke = pctReached >= 100 ? '#00e676' : '#00d4ff';
+    $('be-pct').textContent = Math.round(pctReached) + '%';
+    $('be-ring-sub').textContent = current >= beUnits
+      ? `✅ Profitable by ${(current - beUnits).toLocaleString()} units`
+      : `Need ${(beUnits - current).toLocaleString()} more units`;
+  }
+
+  let insight = `With a contribution margin of ${fmt(cm)} per unit, you need to sell ${beUnits.toLocaleString()} units to cover ${fmt(fixed)} in fixed costs. `;
+  if (current > 0 && current >= beUnits) {
+    insight += `You're currently ${pct(safety)} above break-even — that's a healthy safety cushion.`;
+  } else if (current > 0) {
+    insight += `You're currently ${Math.abs(Math.round(safety))}% below break-even. Consider increasing price, reducing variable costs, or cutting fixed costs.`;
+  }
+  showInsight('be-insight', insight);
+  showResults('res-breakeven');
+}
+
+// ─── ROI ──────────────────────────────────────────────────────────────────────
+function calcROI() {
+  const inv = val('roi-inv'), finalVal = val('roi-val');
+  const months = val('roi-months') || 12, cf = val('roi-cf');
+  if (!inv || !finalVal) return;
+
+  const gain = finalVal + cf - inv;
+  const roi = gain / inv * 100;
+  const years = months / 12;
+  const annualized = (Math.pow((finalVal + cf) / inv, 1 / years) - 1) * 100;
+  const payback = gain > 0 ? (inv / (gain / months)).toFixed(1) : '∞';
+
+  animateValue('roi-r-total', pct(roi));
+  animateValue('roi-r-annual', pct(annualized));
+  animateValue('roi-r-net', fmt(gain));
+  animateValue('roi-r-payback', isFinite(payback) ? payback + ' mo' : '∞');
+  $('roi-r-gain').textContent = gain >= 0 ? `+${fmt(gain)} gained` : `${fmt(gain)} lost`;
+
+  setMetricClass('roi-r-net', gain >= 0 ? 'success' : 'danger');
+
+  let insight = roi >= 0
+    ? `📈 Your ${fmt(inv)} investment grew to ${fmt(finalVal + cf)} — a ${pct(roi)} total return over ${months} months (${pct(annualized)} annualized). `
+    : `📉 Your investment declined by ${fmt(Math.abs(gain))} — a ${pct(Math.abs(roi))} loss over ${months} months. `;
+  if (annualized > 20) insight += `Exceptional annualized return — outperforms most asset classes.`;
+  else if (annualized > 10) insight += `Strong performance, beating long-term stock market averages (~10%).`;
+  else if (annualized > 0) insight += `Positive but modest return — consider if this beats your cost of capital.`;
+  showInsight('roi-insight', insight);
+  showResults('res-roi');
+}
+
+// Range slider sync
+$('roi-months-r').addEventListener('input', function() {
+  $('roi-months-disp').textContent = this.value;
+});
+
+// ─── CAC / LTV ───────────────────────────────────────────────────────────────
+function calcCAC() {
+  const spend = val('cac-spend'), customers = val('cac-customers');
+  const arpu = val('ltv-arpu'), margin = val('ltv-margin') || 75, churn = val('ltv-churn') || 5;
+  if (!spend || !customers || !arpu) return;
+
+  const cac = spend / customers;
+  const lifetime = 1 / (churn / 100); // months
+  const ltv = arpu * (margin / 100) * lifetime;
+  const ratio = ltv / cac;
+  const payback = cac / (arpu * (margin / 100));
+
+  animateValue('cac-r-cac', fmt(cac));
+  animateValue('cac-r-ltv', fmt(ltv));
+  animateValue('cac-r-ratio', ratio.toFixed(1) + 'x');
+  animateValue('cac-r-payback', payback.toFixed(1) + ' mo');
+  animateValue('cac-r-lifetime', Math.round(lifetime) + ' mo');
+  animateValue('cac-r-mrr', fmt(arpu));
+  $('cac-r-life').textContent = `Over ${Math.round(lifetime)} month avg lifetime`;
+
+  let ratioLabel, ratioClass;
+  if (ratio < 1) { ratioLabel = '🚨 Destroying value'; ratioClass = 'danger'; }
+  else if (ratio < 3) { ratioLabel = '⚠️ Needs improvement'; ratioClass = null; }
+  else if (ratio < 5) { ratioLabel = '✅ Healthy (3x target)'; ratioClass = 'success'; }
+  else { ratioLabel = '🚀 Excellent (5x+)'; ratioClass = 'success'; }
+  $('cac-r-ratio-label').textContent = ratioLabel;
+  setMetricClass('cac-r-ratio', ratioClass);
+
+  let insight = `LTV:CAC of ${ratio.toFixed(1)}x — `;
+  if (ratio >= 3) insight += `You recoup your acquisition cost in ${payback.toFixed(1)} months. With a ${Math.round(churn)}% monthly churn, customers stay ~${Math.round(lifetime)} months generating ${fmt(ltv)} in lifetime value.`;
+  else if (ratio >= 1) insight += `Marginal unit economics. Reduce CAC (optimize ad spend, improve conversion) or reduce churn to boost LTV. Target 3x ratio.`;
+  else insight += `You're spending more to acquire customers than they're worth. This is unsustainable — pause acquisition spend until unit economics improve.`;
+  showInsight('cac-insight', insight);
+  showResults('res-cac');
+}
+
+// ─── RUNWAY ──────────────────────────────────────────────────────────────────
+function calcRunway() {
+  const cash = val('rw-cash'), rev = val('rw-rev'), exp = val('rw-exp'), growth = val('rw-growth');
+  if (!cash || !exp) return;
+
+  const burn = exp - rev;
+  const runwaySimple = burn > 0 ? (cash / burn) : Infinity;
+
+  // Find when cash runs out with growth
+  let balance = cash, month = 0, currentRev = rev;
+  let profitMonth = null;
+  while (balance > 0 && month < 120) {
+    month++;
+    currentRev *= (1 + growth / 100);
+    const netBurn = exp - currentRev;
+    balance -= netBurn;
+    if (netBurn <= 0 && profitMonth === null) profitMonth = month;
+    if (balance <= 0) break;
+  }
+  const runway = month;
+
+  const now = new Date();
+  now.setMonth(now.getMonth() + runway);
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+  animateValue('rw-r-runway', runway >= 120 ? '10+ yrs' : runway + ' mo');
+  animateValue('rw-r-burn', fmt(Math.max(0, burn)) + '/mo');
+  animateValue('rw-r-alive', profitMonth ? profitMonth + ' mo' : burn <= 0 ? 'Now' : 'Never*');
+  animateValue('rw-r-profit', profitMonth ? profitMonth + ' mo' : burn <= 0 ? 'Profitable' : 'N/A');
+  $('rw-r-date').textContent = burn > 0 ? `Zero cash: ~${dateStr}` : 'Cash flow positive';
+
+  // 12-month projection bars
+  const bars = [];
+  let b = cash, r = rev;
+  for (let m = 1; m <= 12; m++) {
+    r *= (1 + growth / 100);
+    b -= (exp - r);
+    bars.push({ label: `Mo ${m}`, value: Math.max(0, b), display: fmt(Math.max(0, b)) });
+  }
+  renderBars('rw-bars', bars, bars.map(b => b.value > cash * 0.5 ? '#00e676' : b.value > cash * 0.2 ? '#ffcc00' : '#ff4444'));
+
+  let insight = burn <= 0
+    ? `🟢 You're cash flow positive with ${fmt(Math.abs(burn))}/mo net income. No immediate funding concerns.`
+    : `🔥 Burning ${fmt(burn)}/mo. At ${growth}% monthly revenue growth, runway extends to ~${runway} months.`;
+  if (runway < 6 && burn > 0) insight += ` ⚠️ Critical — under 6 months of runway. Prioritize fundraising or aggressive cost cuts immediately.`;
+  showInsight('rw-insight', insight);
+  showResults('res-runway');
+}
+
+// ─── LOAN ────────────────────────────────────────────────────────────────────
+function calcLoan() {
+  const principal = val('ln-amount'), annualRate = val('ln-rate'), years = val('ln-years');
+  if (!principal || !annualRate || !years) return;
+
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  const payment = principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+  const totalPaid = payment * n;
+  const totalInterest = totalPaid - principal;
+  const interestRatio = totalInterest / principal * 100;
+
+  animateValue('ln-r-payment', fmtD(payment));
+  animateValue('ln-r-interest', fmt(totalInterest));
+  animateValue('ln-r-total', fmt(totalPaid));
+  animateValue('ln-r-ratio', pct(interestRatio));
+
+  // Amortization table (first 24 months)
+  let balance = principal;
+  let rows = '';
+  const limit = Math.min(n, 24);
+  for (let i = 1; i <= limit; i++) {
+    const interestPayment = balance * r;
+    const principalPayment = payment - interestPayment;
+    balance -= principalPayment;
+    rows += `<tr>
+      <td>${i}</td>
+      <td class="highlight">${fmtD(payment)}</td>
+      <td class="positive">${fmtD(principalPayment)}</td>
+      <td class="negative">${fmtD(interestPayment)}</td>
+      <td>${fmtD(Math.max(0, balance))}</td>
+    </tr>`;
+  }
+  if (n > 24) rows += `<tr><td colspan="5" style="color:var(--muted); text-align:center; padding:12px;">... ${n - 24} more months</td></tr>`;
+  $('ln-table').innerHTML = rows;
+  showResults('res-loan');
+}
+
+// Auto-calc on all inputs
+document.querySelectorAll('input[type="number"]').forEach(input => {
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const panel = input.closest('.panel').id.replace('panel-','');
+      const fns = { pl: calcPL, margins: calcMargins, breakeven: calcBreakeven, roi: calcROI, cac: calcCAC, runway: calcRunway, loan: calcLoan };
+      if (fns[panel]) fns[panel]();
+    }
+  });
+});
+</script>
+</body>
+</html>
